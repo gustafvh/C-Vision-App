@@ -15,17 +15,19 @@ import {
   View
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import * as Constants from "expo-permissions";
-import * as Permissions from "expo-constants";
+import * as Constants from "expo-constants";
+import * as Permissions from "expo-permissions";
 import uuid from "uuid";
 import Environment from "../config/environment";
 import firebase from "../utils/firebase";
+import { firestore } from "../utils/firebase";
 
 console.disableYellowBox = true;
 
-export default class App extends React.Component {
+export default class StartScreen extends React.Component {
   state = {
-    image: null,
+    imageUrl: null,
+    imagesCollection: [],
     uploading: false,
     googleResponse: null
   };
@@ -36,7 +38,7 @@ export default class App extends React.Component {
   }
 
   render() {
-    let { image } = this.state;
+    let { imageUrl } = this.state;
 
     return (
       <View style={styles.container}>
@@ -45,19 +47,21 @@ export default class App extends React.Component {
           contentContainerStyle={styles.contentContainer}
         >
           <View style={styles.welcomeContainer}>
-            <Image
+            {/*<Image
               source={
                 __DEV__
                   ? require("../assets/images/robot-dev.png")
                   : require("../assets/images/robot-prod.png")
               }
               style={styles.welcomeImage}
-            />
+            />*/}
           </View>
 
           <View style={styles.getStartedContainer}>
-            {image ? null : (
-              <Text style={styles.getStartedText}>Google Cloud Vision</Text>
+            {imageUrl ? null : (
+              <Text style={styles.getStartedText}>
+                Welcome to the C-Vision. An image recogniztion app.
+              </Text>
             )}
           </View>
 
@@ -114,8 +118,8 @@ export default class App extends React.Component {
   };
 
   _maybeRenderImage = () => {
-    let { image, googleResponse } = this.state;
-    if (!image) {
+    let { imageUrl, googleResponse } = this.state;
+    if (!imageUrl) {
       return;
     }
 
@@ -145,7 +149,10 @@ export default class App extends React.Component {
             overflow: "hidden"
           }}
         >
-          <Image source={{ uri: image }} style={{ width: 250, height: 250 }} />
+          <Image
+            source={{ uri: imageUrl }}
+            style={{ width: 250, height: 250 }}
+          />
         </View>
         <Text
           onPress={this._copyToClipboard}
@@ -178,12 +185,12 @@ export default class App extends React.Component {
     Share.share({
       message: JSON.stringify(this.state.googleResponse.responses),
       title: "Check it out",
-      url: this.state.image
+      url: this.state.imageUrl
     });
   };
 
   _copyToClipboard = () => {
-    Clipboard.setString(this.state.image);
+    Clipboard.setString(this.state.imageUrl);
     alert("Copied to clipboard");
   };
 
@@ -211,7 +218,7 @@ export default class App extends React.Component {
 
       if (!pickerResult.cancelled) {
         uploadUrl = await uploadImageAsync(pickerResult.uri);
-        this.setState({ image: uploadUrl });
+        this.setState({ imageUrl: uploadUrl });
       }
     } catch (e) {
       console.log(e);
@@ -224,7 +231,7 @@ export default class App extends React.Component {
   submitToGoogle = async () => {
     try {
       this.setState({ uploading: true });
-      let { image } = this.state;
+      let { imageUrl } = this.state;
       let body = JSON.stringify({
         requests: [
           {
@@ -242,7 +249,7 @@ export default class App extends React.Component {
             ],
             image: {
               source: {
-                imageUri: image
+                imageUri: imageUrl
               }
             }
           }
@@ -261,16 +268,65 @@ export default class App extends React.Component {
         }
       );
       let responseJson = await response.json();
-      console.log(responseJson);
+      //console.log(responseJson);
       this.setState({
         googleResponse: responseJson,
         uploading: false
       });
+
+      let topImageLabels = [
+        responseJson.responses[0].labelAnnotations[0].description,
+        responseJson.responses[0].labelAnnotations[1].description,
+        responseJson.responses[0].labelAnnotations[2].description,
+        responseJson.responses[0].labelAnnotations[3].description
+      ];
+
+      firebase
+        .database()
+        .ref(
+          "images/" +
+            topImageLabels[0] +
+            " (" +
+            topImageLabels[1] +
+            ", " +
+            topImageLabels[2] +
+            ", " +
+            topImageLabels[3] +
+            ")"
+        )
+        .set({
+          imageUrl: imageUrl,
+          id: Math.round(Math.random() * 10000),
+          confidence: responseJson.responses[0].labelAnnotations[0].score,
+          fullResponseData: responseJson
+        });
     } catch (error) {
       console.log(error);
     }
   };
 }
+
+readFromFirebase = () => {
+  const database = firebase.database().ref("images");
+
+  database.on("value", snapshot => {
+    let images = snapshot.val();
+    let newState = [];
+    for (let image in images) {
+      newState.push({
+        image: image,
+        imageUrl: images[image].imageUrl,
+        id: images[image].id,
+        confidence: images[image].confidence,
+        fullResponseData: images[image].fullResponseData
+      });
+    }
+
+    this.setState({
+      imagesReadFromFirebase: newState
+    });
+  });
+};
 
 async function uploadImageAsync(uri) {
   // Why are we using XMLHttpRequest? See:
@@ -298,7 +354,9 @@ async function uploadImageAsync(uri) {
   // We're done with the blob, close and release it
   blob.close();
 
-  return await snapshot.ref.getDownloadURL();
+  const imageUrl = await snapshot.ref.getDownloadURL();
+
+  return imageUrl;
 }
 
 const styles = StyleSheet.create({
@@ -346,3 +404,7 @@ const styles = StyleSheet.create({
     alignItems: "center"
   }
 });
+
+StartScreen.navigationOptions = {
+  title: "Start"
+};

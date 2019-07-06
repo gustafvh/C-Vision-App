@@ -1,5 +1,6 @@
 import Environment from "../config/environment";
 import * as firebase from "firebase";
+import "@firebase/firestore";
 
 firebase.initializeApp({
   apiKey: Environment["FIREBASE_API_KEY"],
@@ -9,4 +10,7 @@ firebase.initializeApp({
   storageBucket: Environment["FIREBASE_STORAGE_BUCKET"],
   messagingSenderId: Environment["FIREBASE_MESSAGING_SENDER_ID"]
 });
+
+export const firestore = firebase.database();
+
 export default firebase;

@@ -11,65 +11,105 @@ import {
 } from "react-native";
 
 import { MonoText } from "../components/StyledText";
+import ImageGrid from "../components/ImageGrid";
+import firebase from "../utils/firebase";
+import { firestore } from "../utils/firebase";
 
-export default function HomeScreen() {
-  return (
-    <View style={styles.container}>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.contentContainer}
-      >
-        <View style={styles.welcomeContainer}>
-          <Image
-            source={
-              __DEV__
-                ? require("../assets/images/robot-dev.png")
-                : require("../assets/images/robot-prod.png")
-            }
-            style={styles.welcomeImage}
-          />
-        </View>
+export default class HomeScreen extends React.Component {
+  state = {
+    imagesReadFromFirebase: []
+  };
 
-        <View style={styles.getStartedContainer}>
-          <DevelopmentModeNotice />
+  componentDidMount() {
+    this.readFromFirebase();
+  }
 
-          <Text style={styles.getStartedText}>Get started by opening</Text>
+  readFromFirebase = () => {
+    const database = firebase.database().ref("images");
 
-          <View
-            style={[styles.codeHighlightContainer, styles.homeScreenFilename]}
-          >
-            <MonoText>screens/HomeScreen.js</MonoText>
+    database.on("value", snapshot => {
+      let images = snapshot.val();
+      let newState = [];
+      for (let image in images) {
+        newState.push({
+          image: image,
+          imageUrl: images[image].imageUrl,
+          id: images[image].id,
+          confidence: images[image].confidence,
+          fullResponseData: images[image].fullResponseData
+        });
+      }
+
+      this.setState({
+        imagesReadFromFirebase: newState
+      });
+    });
+  };
+
+  render() {
+    return (
+      <View style={styles.container}>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.contentContainer}
+        >
+          <View style={styles.welcomeContainer}>
+            <ImageGrid
+              imagesReadFromFirebase={this.state.imagesReadFromFirebase}
+              imageUrl="https://firebasestorage.googleapis.com/v0/b/c-vision-rn-app.appspot.com/o/8a67f576-e697-4688-ac8c-79c6116aed44?alt=media&token=288814e5-fa1b-4ab1-94ef-0f5a4275feeb"
+            />
+
+            <Image
+              source={
+                __DEV__
+                  ? require("../assets/images/robot-dev.png")
+                  : require("../assets/images/robot-prod.png")
+              }
+              style={styles.welcomeImage}
+            />
           </View>
 
-          <Text style={styles.getStartedText}>
-            Change this text and your app will automatically reload.
-          </Text>
-        </View>
+          <View style={styles.getStartedContainer}>
+            <DevelopmentModeNotice />
 
-        <View style={styles.helpContainer}>
-          <TouchableOpacity onPress={handleHelpPress} style={styles.helpLink}>
-            <Text style={styles.helpLinkText}>
-              Help, it didn’t automatically reload!
+            <Text style={styles.getStartedText}>Get started by opening</Text>
+
+            <View
+              style={[styles.codeHighlightContainer, styles.homeScreenFilename]}
+            >
+              <MonoText>screens/HomeScreen.js</MonoText>
+            </View>
+
+            <Text style={styles.getStartedText}>
+              Change this text and your app will automatically reload.
             </Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+          </View>
 
-      <View style={styles.tabBarInfoContainer}>
-        <Text style={styles.tabBarInfoText}>
-          This is a tab bar. You can edit it in:
-        </Text>
+          <View style={styles.helpContainer}>
+            <TouchableOpacity onPress={handleHelpPress} style={styles.helpLink}>
+              <Text style={styles.helpLinkText}>
+                Help, it didn’t automatically reload!
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
 
-        <View
-          style={[styles.codeHighlightContainer, styles.navigationFilename]}
-        >
-          <MonoText style={styles.codeHighlightText}>
-            navigation/MainTabNavigator.js
-          </MonoText>
+        <View style={styles.tabBarInfoContainer}>
+          <Text style={styles.tabBarInfoText}>
+            This is a tab bar. You can edit it in:
+          </Text>
+
+          <View
+            style={[styles.codeHighlightContainer, styles.navigationFilename]}
+          >
+            <MonoText style={styles.codeHighlightText}>
+              navigation/MainTabNavigator.js
+            </MonoText>
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  }
 }
 
 HomeScreen.navigationOptions = {

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "expo-test-app",
-    "slug": "my-new-project",
+    "name": "c-vision-rn-app",
+    "slug": "c-vision-rn-app",
     "privacy": "public",
     "sdkVersion": "33.0.0",
     "platforms": [
@@ -25,6 +25,7 @@
     ],
     "ios": {
       "supportsTablet": true
-    }
+    },
+    "description": ""
   }
 }
