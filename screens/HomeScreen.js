@@ -58,53 +58,16 @@ export default class HomeScreen extends React.Component {
               imagesReadFromFirebase={this.state.imagesReadFromFirebase}
               imageUrl="https://firebasestorage.googleapis.com/v0/b/c-vision-rn-app.appspot.com/o/8a67f576-e697-4688-ac8c-79c6116aed44?alt=media&token=288814e5-fa1b-4ab1-94ef-0f5a4275feeb"
             />
-
-            <Image
-              source={
-                __DEV__
-                  ? require("../assets/images/robot-dev.png")
-                  : require("../assets/images/robot-prod.png")
-              }
-              style={styles.welcomeImage}
-            />
-          </View>
-
-          <View style={styles.getStartedContainer}>
-            <DevelopmentModeNotice />
-
-            <Text style={styles.getStartedText}>Get started by opening</Text>
-
-            <View
-              style={[styles.codeHighlightContainer, styles.homeScreenFilename]}
-            >
-              <MonoText>screens/HomeScreen.js</MonoText>
-            </View>
-
-            <Text style={styles.getStartedText}>
-              Change this text and your app will automatically reload.
-            </Text>
-          </View>
-
-          <View style={styles.helpContainer}>
-            <TouchableOpacity onPress={handleHelpPress} style={styles.helpLink}>
-              <Text style={styles.helpLinkText}>
-                Help, it didn’t automatically reload!
-              </Text>
-            </TouchableOpacity>
           </View>
         </ScrollView>
 
         <View style={styles.tabBarInfoContainer}>
-          <Text style={styles.tabBarInfoText}>
-            This is a tab bar. You can edit it in:
-          </Text>
+          <Text style={styles.tabBarInfoText}>Click below to switch tabs</Text>
 
           <View
             style={[styles.codeHighlightContainer, styles.navigationFilename]}
           >
-            <MonoText style={styles.codeHighlightText}>
-              navigation/MainTabNavigator.js
-            </MonoText>
+            <MonoText style={styles.codeHighlightText}>monospace font</MonoText>
           </View>
         </View>
       </View>
