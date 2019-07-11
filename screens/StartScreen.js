@@ -2,25 +2,25 @@ import React from "react";
 import {
   ActivityIndicator,
   Button,
+  Platform,
   Clipboard,
   FlatList,
   Image,
-  Platform,
   Share,
-  StatusBar,
   StyleSheet,
   Text,
-  TouchableOpacity,
   ScrollView,
   View
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import * as Constants from "expo-constants";
 import * as Permissions from "expo-permissions";
+import { MonoText } from "../components/StyledText";
 import uuid from "uuid";
 import Environment from "../config/environment";
 import firebase from "../utils/firebase";
-import { firestore } from "../utils/firebase";
+import lightning from "../assets/images/lightning-logo.png";
+
+//Some functions are inspired by mlapeter at https://github.com/mlapeter/google-cloud-vision
 
 console.disableYellowBox = true;
 
@@ -29,7 +29,8 @@ export default class StartScreen extends React.Component {
     imageUrl: null,
     imagesCollection: [],
     uploading: false,
-    googleResponse: null
+    googleResponse: null,
+    step: 1
   };
 
   async componentDidMount() {
@@ -38,52 +39,103 @@ export default class StartScreen extends React.Component {
   }
 
   render() {
-    let { imageUrl } = this.state;
-
     return (
       <View style={styles.container}>
         <ScrollView
           style={styles.container}
           contentContainerStyle={styles.contentContainer}
         >
-          <View style={styles.welcomeContainer}>
-            {/*<Image
-              source={
-                __DEV__
-                  ? require("../assets/images/robot-dev.png")
-                  : require("../assets/images/robot-prod.png")
-              }
-              style={styles.welcomeImage}
-            />*/}
-          </View>
-
-          <View style={styles.getStartedContainer}>
-            {imageUrl ? null : (
-              <Text style={styles.getStartedText}>
-                Welcome to the C-Vision. An image recogniztion app.
-              </Text>
-            )}
-          </View>
-
           <View style={styles.helpContainer}>
-            <Button
-              onPress={this._pickImage}
-              title="Pick an image from camera roll"
-            />
-
-            <Button onPress={this._takePhoto} title="Take a photo" />
             {this.state.googleResponse && (
-              <FlatList
-                data={this.state.googleResponse.responses[0].labelAnnotations}
-                extraData={this.state}
-                keyExtractor={this._keyExtractor}
-                renderItem={({ item }) => <Text>Item: {item.description}</Text>}
-              />
+              <View>
+                {this.state.imageUrl !== null && (
+                  <View style={{ alignItems: "center", marginBottom: 10 }}>
+                    <Image
+                      source={{ uri: this.state.imageUrl }}
+                      style={{ width: 300, height: 300 }}
+                    />
+                  </View>
+                )}
+                <View style={{ height: 450 }}>
+                  <Text style={styles.h1}>Result</Text>
+                  <Text style={styles.paragraphText}>The image contains:</Text>
+                  <Text style={styles.paragraphText}> </Text>
+                  <FlatList
+                    data={
+                      this.state.googleResponse.responses[0].labelAnnotations
+                    }
+                    extraData={this.state}
+                    keyExtractor={this._keyExtractor}
+                    renderItem={({ item }) => (
+                      <View>
+                        <Text style={styles.paragraphText}>
+                          <Text style={{ fontWeight: "800" }}>
+                            {item.description}
+                          </Text>{" "}
+                          - {Math.round(item.score * 100)}% certainty.
+                        </Text>
+                      </View>
+                    )}
+                  />
+                </View>
+
+                <Text style={styles.paragraphText}> </Text>
+
+                <Text style={styles.paragraphText}>
+                  Full Response Data from Google:
+                </Text>
+
+                <Text style={styles.paragraphText}> </Text>
+
+                <Text
+                  onPress={this._copyToClipboard}
+                  onLongPress={this._share}
+                  style={{ paddingVertical: 10, paddingHorizontal: 10 }}
+                >
+                  {JSON.stringify(this.state.googleResponse.responses)}
+                </Text>
+              </View>
             )}
             {this._maybeRenderImage()}
             {this._maybeRenderUploadingOverlay()}
           </View>
+
+          {!this.state.imageUrl && (
+            <View style={styles.welcomeContainer}>
+              <Image
+                source={lightning}
+                style={{
+                  width: 180,
+                  height: 220,
+                  resizeMode: "contain"
+                }}
+              />
+
+              <View style={styles.getStartedContainer}>
+                <Text style={styles.h3}>Welcome to.</Text>
+                <Text style={styles.h1}>C-Vision.</Text>
+                <Text style={styles.paragraphText}>An image labeling app.</Text>
+                <Text style={styles.paragraphText}>
+                  Upload an image to analyse.
+                </Text>
+                <Text style={styles.paragraphText}> </Text>
+              </View>
+
+              <Text style={styles.paragraphText}> Choose image from: </Text>
+
+              <Button onPress={this._pickImage} title="Camera roll" />
+
+              <Button onPress={this._takePhoto} title="Take a photo" />
+            </View>
+          )}
         </ScrollView>
+
+        <View style={styles.tabBarInfoContainer}>
+          <Text style={styles.tabBarInfoText}>
+            <Text style={styles.tabBarInfoTextHighlighted}>Upload</Text> -
+            Analyze - Compare
+          </Text>
+        </View>
       </View>
     );
   }
@@ -127,50 +179,27 @@ export default class StartScreen extends React.Component {
       <View
         style={{
           marginTop: 20,
-          width: 250,
           borderRadius: 3,
           elevation: 2
         }}
       >
+        <Image source={{ uri: imageUrl }} style={{ width: 300, height: 300 }} />
+
+        <Text />
         <Button
           style={{ marginBottom: 10 }}
           onPress={() => this.submitToGoogle()}
-          title="Analyze!"
+          title="Analyze this image"
         />
+        <Text style={styles.paragraphText}>
+          This will use Image Recogniztion to guess what this image contains
+        </Text>
 
-        <View
-          style={{
-            borderTopRightRadius: 3,
-            borderTopLeftRadius: 3,
-            shadowColor: "rgba(0,0,0,1)",
-            shadowOpacity: 0.2,
-            shadowOffset: { width: 4, height: 4 },
-            shadowRadius: 5,
-            overflow: "hidden"
-          }}
-        >
-          <Image
-            source={{ uri: imageUrl }}
-            style={{ width: 250, height: 250 }}
-          />
-        </View>
         <Text
           onPress={this._copyToClipboard}
           onLongPress={this._share}
           style={{ paddingVertical: 10, paddingHorizontal: 10 }}
         />
-
-        <Text>Raw JSON:</Text>
-
-        {googleResponse && (
-          <Text
-            onPress={this._copyToClipboard}
-            onLongPress={this._share}
-            style={{ paddingVertical: 10, paddingHorizontal: 10 }}
-          >
-            JSON.stringify(googleResponse.responses)}
-          </Text>
-        )}
       </View>
     );
   };
@@ -271,7 +300,8 @@ export default class StartScreen extends React.Component {
       //console.log(responseJson);
       this.setState({
         googleResponse: responseJson,
-        uploading: false
+        uploading: false,
+        step: 2
       });
 
       let topImageLabels = [
@@ -365,34 +395,32 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     paddingBottom: 10
   },
-  developmentModeText: {
-    marginBottom: 20,
-    color: "rgba(0,0,0,0.4)",
-    fontSize: 14,
-    lineHeight: 19,
-    textAlign: "center"
-  },
   contentContainer: {
     paddingTop: 30
   },
   welcomeContainer: {
     alignItems: "center",
     marginTop: 10,
-    marginBottom: 20
-  },
-  welcomeImage: {
-    width: 100,
-    height: 80,
-    resizeMode: "contain",
-    marginTop: 3,
-    marginLeft: -10
+    marginBottom: 10
   },
   getStartedContainer: {
     alignItems: "center",
     marginHorizontal: 50
   },
-
-  getStartedText: {
+  h1: {
+    fontSize: 42,
+    fontWeight: "700",
+    color: "rgba(96,100,109, 1)",
+    lineHeight: 46,
+    textAlign: "center"
+  },
+  h3: {
+    fontSize: 21,
+    color: "rgba(96,100,109, 1)",
+    lineHeight: 34,
+    textAlign: "center"
+  },
+  paragraphText: {
     fontSize: 17,
     color: "rgba(96,100,109, 1)",
     lineHeight: 24,
@@ -402,6 +430,45 @@ const styles = StyleSheet.create({
   helpContainer: {
     marginTop: 15,
     alignItems: "center"
+  },
+  tabBarInfoContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    ...Platform.select({
+      ios: {
+        shadowColor: "black",
+        shadowOffset: { width: 0, height: -3 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3
+      },
+      android: {
+        elevation: 20
+      }
+    }),
+    alignItems: "center",
+    backgroundColor: "#fbfbfb",
+    paddingVertical: 20
+  },
+  tabBarInfoText: {
+    fontSize: 17,
+    color: "rgba(96,100,109, 0.2)",
+    textAlign: "center"
+  },
+  tabBarInfoTextHighlighted: {
+    color: "rgba(51,153,255, 0.8)"
+  },
+  codeHighlightContainer: {
+    backgroundColor: "rgba(0,0,0,0.05)",
+    borderRadius: 3,
+    paddingHorizontal: 4
+  },
+  navigationFilename: {
+    marginTop: 5
+  },
+  codeHighlightText: {
+    color: "rgba(96,100,109, 0.8)"
   }
 });
 

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "c-vision-rn-app",
-    "slug": "c-vision-rn-app",
+    "name": "C-Vision - React Native App",
+    "slug": "c-vision",
     "privacy": "public",
     "sdkVersion": "33.0.0",
     "platforms": [

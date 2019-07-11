@@ -6,7 +6,7 @@ import {
 } from "react-navigation";
 
 import TabBarIcon from "../components/TabBarIcon";
-import HomeScreen from "../screens/HomeScreen";
+import ImagesScreen from "../screens/ImagesScreen";
 import StartScreen from "../screens/StartScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 
@@ -15,28 +15,24 @@ const config = Platform.select({
   default: {}
 });
 
-const HomeStack = createStackNavigator(
+const ImagesTab = createStackNavigator(
   {
-    Home: HomeScreen
+    Images: ImagesScreen
   },
   config
 );
 
-HomeStack.navigationOptions = {
-  tabBarLabel: "Other option",
+ImagesTab.navigationOptions = {
+  tabBarLabel: "Analyzed Images",
   tabBarIcon: ({ focused }) => (
     <TabBarIcon
       focused={focused}
-      name={
-        Platform.OS === "ios"
-          ? `ios-information-circle${focused ? "" : "-outline"}`
-          : "md-information-circle"
-      }
+      name={Platform.OS === "ios" ? "ios-folder" : "md-folder"}
     />
   )
 };
 
-HomeStack.path = "";
+ImagesTab.path = "";
 
 const StartTab = createStackNavigator(
   {
@@ -50,7 +46,7 @@ StartTab.navigationOptions = {
   tabBarIcon: ({ focused }) => (
     <TabBarIcon
       focused={focused}
-      name={Platform.OS === "ios" ? "ios-link" : "md-link"}
+      name={Platform.OS === "ios" ? "ios-home" : "md-home"}
     />
   )
 };
@@ -78,7 +74,7 @@ SettingsStack.path = "";
 
 const tabNavigator = createBottomTabNavigator({
   StartTab,
-  HomeStack
+  ImagesTab
 });
 
 tabNavigator.path = "";
