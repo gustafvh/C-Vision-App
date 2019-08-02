@@ -1,5 +1,12 @@
+
+
 # C-Vision-App
 Simple and (for now) **non-polished** Image Recognizition Application that labels what an uploaded image contains. All labels are graded on certainty-scale and top candidates are displayed. 
+
+## Logo
+
+<img src="lightning-logo.png" alt="Logo"
+	title="Logo" height="150" height="100" />
 
 ## Technologies
 - The app is written in Javascript, but uses the framework **React Native** to target native API on both iOS and Android. 
@@ -11,8 +18,8 @@ Because it is written in React Native it works for both iOS, Android and Web (Ex
 
 ## Demo
 
-<img src="/c-vision-demo.gif" alt="Kitten"
-	title="A cute kitten" height="550" height="100" />
+<img src="/c-vision-demo.gif" alt="Demo"
+	title="Demo" height="550" height="100" />
 
 ## Packages and dependencies used
 
