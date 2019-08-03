@@ -1,7 +1,7 @@
 
 
 # C-Vision-App
-Simple and (for now) **non-polished** Image Recognizition Application that labels what an uploaded image contains. All labels are graded on certainty-scale and top candidates are displayed. 
+Simple and (for now) **non-polished** Image Recognition Application that labels what an uploaded image contains. All labels are graded on certainty-scale and top candidates are displayed. 
 
 ## Logo
 
